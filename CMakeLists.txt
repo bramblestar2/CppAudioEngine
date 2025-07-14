@@ -14,6 +14,7 @@ find_package(SndFile CONFIG REQUIRED)
 find_package(Aubio CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(unofficial-libmagic REQUIRED)
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
 
 add_library(CppAudioEngineCore
     STATIC
@@ -21,15 +22,19 @@ add_library(CppAudioEngineCore
         include/Audio/StreamData.h
         include/Audio/AudioBuffer.h src/Audio/AudioBuffer.cpp
         include/Audio/AudioManager.h src/Audio/AudioManager.cpp
+
+        include/Utility/IdPool.h src/Utility/IdPool.cpp
 )
 
 target_link_libraries(CppAudioEngineCore
     PRIVATE
-        portaudio_static
         SndFile::sndfile
         Aubio::aubio
         spdlog::spdlog
         unofficial::libmagic::libmagic
+        unofficial::sqlite3::sqlite3
+        $<$<AND:$<BOOL:UNIX>,$<NOT:$<BOOL:APPLE>>>:portaudio_static>
+        $<$<BOOL:WIN32>:portaudio>
 )
 
 target_include_directories(CppAudioEngineCore

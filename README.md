@@ -6,3 +6,4 @@ vcpkg
 - portaudio
 - aubio
 - unofficial-libmagic
+- sqlite3

@@ -6,7 +6,7 @@ struct AudioBuffer {
     int channels;
     double sampleRate;
 
-    AudioBuffer(int channels, double sampleRate);
+    AudioBuffer(std::vector<float>&& data, int channels, double sampleRate);
 
     float estimatedBPM();
     void calculateBPM();

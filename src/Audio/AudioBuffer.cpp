@@ -3,8 +3,9 @@
 #include <numeric>
 
 
-AudioBuffer::AudioBuffer(int channels, double sampleRate)
-    : channels(channels)
+AudioBuffer::AudioBuffer(std::vector<float>&& data, int channels, double sampleRate)
+    : data(std::move(data))
+    , channels(channels)
     , sampleRate(sampleRate)
     , beatsPerMinute(0)
 {
