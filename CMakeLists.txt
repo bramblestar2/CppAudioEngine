@@ -10,17 +10,26 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(portaudio CONFIG REQUIRED)
+find_package(SndFile CONFIG REQUIRED)
+find_package(Aubio CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(unofficial-libmagic REQUIRED)
 
 add_library(CppAudioEngineCore
     STATIC
         include/Audio/AudioEngine.h src/Audio/AudioEngine.cpp
         include/Audio/StreamData.h
-        include/Audio/AudioData.h
+        include/Audio/AudioBuffer.h src/Audio/AudioBuffer.cpp
+        include/Audio/AudioManager.h src/Audio/AudioManager.cpp
 )
 
 target_link_libraries(CppAudioEngineCore
     PRIVATE
         portaudio_static
+        SndFile::sndfile
+        Aubio::aubio
+        spdlog::spdlog
+        unofficial::libmagic::libmagic
 )
 
 target_include_directories(CppAudioEngineCore
@@ -28,6 +37,9 @@ target_include_directories(CppAudioEngineCore
         src
         include
 )
+
+target_compile_definitions(CppAudioEngineCore PRIVATE MAGIC_DB_PATH="${unofficial-libmagic_DICTIONARY}")
+
 
 
 
