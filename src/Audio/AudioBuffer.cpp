@@ -115,6 +115,12 @@ AudioBuffer AudioBuffer::load(std::string file, double start /*seconds*/, double
         srcData.data_out = out;
         srcData.input_frames = INPUT_FRAMES;
         srcData.output_frames = OUTPUT_FRAMES;
+        srcData.src_ratio = ratio;
+        srcData.end_of_input = 1;
+        srcData.input_frames_used = 0;
+        srcData.output_frames_gen = 0;
+        
+        
     };
 
     if (start == 0 && end == 0) {
