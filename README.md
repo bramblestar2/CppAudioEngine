@@ -7,3 +7,4 @@ vcpkg
 - aubio
 - unofficial-libmagic
 - sqlite3
+- libsamplerate

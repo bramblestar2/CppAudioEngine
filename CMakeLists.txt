@@ -15,6 +15,7 @@ find_package(Aubio CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(unofficial-libmagic REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
+find_package(SampleRate CONFIG REQUIRED)
 
 add_library(CppAudioEngineCore
     STATIC
@@ -22,6 +23,7 @@ add_library(CppAudioEngineCore
         include/Audio/StreamData.h
         include/Audio/AudioBuffer.h src/Audio/AudioBuffer.cpp
         include/Audio/AudioManager.h src/Audio/AudioManager.cpp
+        include/Audio/AudioPlayer.h src/Audio/AudioPlayer.cpp
 
         include/Utility/IdPool.h src/Utility/IdPool.cpp
 )
@@ -33,6 +35,7 @@ target_link_libraries(CppAudioEngineCore
         spdlog::spdlog
         unofficial::libmagic::libmagic
         unofficial::sqlite3::sqlite3
+        SampleRate::samplerate
         $<$<AND:$<BOOL:UNIX>,$<NOT:$<BOOL:APPLE>>>:portaudio_static>
         $<$<BOOL:WIN32>:portaudio>
 )
@@ -55,4 +58,5 @@ add_executable(AudioEngine
 target_link_libraries(AudioEngine
     PRIVATE
         CppAudioEngineCore
+        spdlog::spdlog
 )
