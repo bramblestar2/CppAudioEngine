@@ -24,6 +24,7 @@ add_library(CppAudioEngineCore
         include/Audio/AudioBuffer.h src/Audio/AudioBuffer.cpp
         include/Audio/AudioManager.h src/Audio/AudioManager.cpp
         include/Audio/AudioPlayer.h src/Audio/AudioPlayer.cpp
+        include/Audio/Voice.h src/Audio/Voice.cpp
 
         include/Utility/IdPool.h src/Utility/IdPool.cpp
 )

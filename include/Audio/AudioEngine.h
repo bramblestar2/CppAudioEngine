@@ -32,8 +32,6 @@ private:
                               const PaStreamCallbackTimeInfo* timeInfo, 
                               PaStreamCallbackFlags flags);
 
-    float interpolate(const Voice& voice, size_t idx, size_t next_idx, double frac, int channel);
-
     PaStream *m_stream;
 
     std::mutex m_mutex;

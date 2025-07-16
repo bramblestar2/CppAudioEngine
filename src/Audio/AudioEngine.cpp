@@ -36,7 +36,7 @@ bool AudioEngine::start() {
 
     PaStreamParameters sParams = {};
     sParams.device = Pa_GetDefaultOutputDevice();
-    sParams.channelCount = 1;
+    sParams.channelCount = m_channels;
     sParams.sampleFormat = paFloat32;
     sParams.suggestedLatency = Pa_GetDeviceInfo(sParams.device)->defaultLowOutputLatency;
     sParams.hostApiSpecificStreamInfo = nullptr;
@@ -128,80 +128,50 @@ int AudioEngine::paCallback(const void* in, void* out,
 
 
 int AudioEngine::handleStreamCallback(
-    const void* in, void* out, 
-    unsigned long frames, 
-    const PaStreamCallbackTimeInfo* timeInfo, 
-    PaStreamCallbackFlags flags
+    const void* , void* outVoid,
+    unsigned long frames,
+    const PaStreamCallbackTimeInfo*,
+    PaStreamCallbackFlags
 ) {
-    float* outF = static_cast<float*>(out);
-    unsigned long numSamples = frames * m_channels;
-    
-    // Zero the buffer safely
-    std::fill(outF, outF + numSamples, 0.0f);
+    auto* outF = static_cast<float*>(outVoid);
+    const auto totalSamples = frames * m_channels;
 
-    std::lock_guard<std::mutex> lock(m_mutex);
+    std::fill(outF, outF + totalSamples, 0.0f);
 
-    for (auto it = m_voices.begin(); it != m_voices.end();) {
-        Voice& voice = *it;
-        double increment = voice.sampleRate / m_sampleRate;
-        bool voiceFinished = false;
+    std::lock_guard lock(m_mutex);
 
+    for (auto& voice : m_voices) {
+        const double step = voice.sampleRate / m_sampleRate;
         for (unsigned long f = 0; f < frames; ++f) {
             size_t idx = static_cast<size_t>(voice.pos);
-            
             if (idx >= voice.frameCount()) {
-                voiceFinished = true;
+                voice.pos = voice.frameCount();
                 break;
             }
 
             double frac = voice.pos - idx;
-            size_t next_idx = (idx + 1 < voice.frameCount()) ? idx + 1 : idx;
+            size_t next_idx = std::min(idx + 1, voice.frameCount() - 1);
+            size_t base = idx * voice.channels;
+            size_t next_base = next_idx * voice.channels;
 
-            if (voice.channels == 1) {
-                float sample = interpolate(voice, idx, next_idx, frac, 0);
-                for (int ch = 0; ch < m_channels; ++ch) {
-                    outF[f * m_channels + ch] += sample;
-                }
-            }
-            else {
-                for (int ch = 0; ch < m_channels; ++ch) {
-                    int srcCh = std::min(ch, voice.channels - 1);
-                    float sample = interpolate(voice, idx, next_idx, frac, srcCh);
-                    outF[f * m_channels + ch] += sample;
-                }
+            for (int ch = 0; ch < m_channels; ++ch) {
+                int srcCh = std::min(ch, voice.channels - 1);
+                float s0 = voice.data[base + srcCh];
+                float s1 = voice.data[next_base + srcCh];
+                float sample = s0 + (s1 - s0) * float(frac);
+                outF[f * m_channels + ch] += sample;
             }
 
-            voice.pos += increment;
-            if (voice.pos >= voice.frameCount()) {
-                voiceFinished = true;
-                break;
-            }
-        }
-
-        if (voiceFinished) {
-            it = m_voices.erase(it);
-        } else {
-            ++it;
+            voice.pos += step;
         }
     }
 
-    // Apply clipping prevention
-    for (unsigned long i = 0; i < numSamples; ++i) {
-        outF[i] = std::clamp(outF[i], -1.0f, 1.0f);
-    }
+    std::erase_if(m_voices, [](auto& v){
+        return v.pos >= v.frameCount();
+    });
+
+    std::transform(outF, outF + totalSamples, outF,
+                   [](float x){ return std::clamp(x, -1.0f, 1.0f); });
 
     return paContinue;
-}
-
-float AudioEngine::interpolate(const Voice& voice, size_t idx, size_t next_idx, double frac, int channel) {
-    size_t base_idx = idx * voice.channels + channel;
-    // Ensure we don't access beyond the buffer
-    size_t next_base_idx = next_idx * voice.channels + channel;
-    
-    float s0 = voice.data[base_idx];
-    float s1 = (next_base_idx < voice.frameCount() * voice.channels) 
-               ? voice.data[next_base_idx] 
-               : s0;  // Use current sample if next is out of bounds
-    
-    return static_cast<float>(s0 + (s1 - s0) * frac);
 }

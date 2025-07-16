@@ -33,14 +33,8 @@ int AudioManager::load(std::string file, int id) {
     magic_close(magic);
 
     if (type.starts_with("audio/")) {
-        SndfileHandle sf(file.c_str(), SFM_READ);
-
-        int channels = sf.channels();
-        double sampleRate = sf.samplerate();
-        std::vector<float> data(sf.frames() * channels);
-        sf.readf(data.data(), sf.frames());
-
-        return load(std::move(data), channels, sampleRate, id);
+        AudioBuffer audioBuffer = AudioBuffer::load(file);
+        return load(std::move(audioBuffer), id);
     }
 
     return -1;

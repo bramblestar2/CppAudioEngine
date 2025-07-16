@@ -4,7 +4,6 @@
 #include <string>
 #include <spdlog/spdlog.h>
 #include <sndfile.hh>
-#include <samplerate.h>
 
 
 AudioBuffer::AudioBuffer(std::vector<float>&& data, int channels, double sampleRate)
@@ -78,10 +77,10 @@ AudioBuffer AudioBuffer::load(std::string file) {
     return AudioBuffer(std::move(data), channels, sampleRate);
 }
 
-AudioBuffer AudioBuffer::load(std::string file, double start /*seconds*/, double end /*seconds*/, double sampleRate, int channels) {
+AudioBuffer AudioBuffer::load(std::string file, uint64_t start /* ms */, uint64_t end /* ms */, double sampleRate) {
     SndfileHandle sndfile(file);
 
-    bool resample = false;
+    bool resample = (sampleRate > 0 && sampleRate != sndfile.samplerate());
 
     if (sampleRate == -1) {
         sampleRate = sndfile.samplerate();
@@ -89,64 +88,71 @@ AudioBuffer AudioBuffer::load(std::string file, double start /*seconds*/, double
         resample = true;
     }
 
-    if (channels == -1) {
-        channels = sndfile.channels();
-    } else {
-        resample = true;
-    }
-
-    auto resample = [&](std::vector<float>& data, int channels, double sampleRate) {
-        int error;
-        SRC_STATE *state = src_new(SRC_SINC_MEDIUM_QUALITY, channels, &error);
-        if (!state) {
-            spdlog::error("Failed to create SRC_STATE: {}", error);
-            return;
-        }
-
-        double ratio = sampleRate / sndfile.samplerate();
-
-        int INPUT_FRAMES = 512;
-        int OUTPUT_FRAMES = (int)(INPUT_FRAMES * ratio + 1);
-
-        float in[INPUT_FRAMES * channels];
-        float out[OUTPUT_FRAMES * channels];
-        SRC_DATA srcData;
-        srcData.data_in = in;
-        srcData.data_out = out;
-        srcData.input_frames = INPUT_FRAMES;
-        srcData.output_frames = OUTPUT_FRAMES;
-        srcData.src_ratio = ratio;
-        srcData.end_of_input = 1;
-        srcData.input_frames_used = 0;
-        srcData.output_frames_gen = 0;
-        
-        
-    };
+    int channels = sndfile.channels();
 
     if (start == 0 && end == 0) {
         std::vector<float> data(sndfile.frames() * channels);
         sndfile.readf(data.data(), sndfile.frames());
+
+        if (resample) {
+            data = resampleBuffer(data, sndfile.samplerate(), sampleRate, channels);
+        }
+
         return AudioBuffer(std::move(data), channels, sampleRate);
     }
 
-    int startFrame = (int)(std::min(start, end) * sampleRate);
-    int endFrame = (int)(std::max(start, end) * sampleRate);
-    int frames = endFrame - startFrame;
 
-    if (startFrame < 0) {
-        startFrame = 0;
+    uint64_t totalFrames = sndfile.frames();
+    uint64_t startFrame = std::min(static_cast<uint64_t>(start * sndfile.samplerate() / 1000), totalFrames);
+    uint64_t endFrame = std::min(static_cast<uint64_t>(end * sndfile.samplerate() / 1000), totalFrames);
+    if (endFrame < startFrame) {
+        endFrame = startFrame;
     }
+    int countFrames = endFrame - startFrame;
 
-    if (endFrame > sndfile.frames()) {
-        endFrame = sndfile.frames();
+    std::vector<float> data(countFrames * channels);
+    sndfile.seek(static_cast<int64_t>(startFrame), SEEK_SET);
+    sndfile.readf(data.data(), countFrames);
+
+    if (resample) {
+        data = resampleBuffer(data, sndfile.samplerate(), sampleRate, channels);
     }
-
-    if (startFrame > endFrame) {
-        startFrame = endFrame;
-    }
-
-    std::vector<float> data((end - start) * channels);
-    sndfile.seek(sndfile.frames() * start, SEEK_SET);
-    sndfile.readf(data.data(), frames);
+    
     return AudioBuffer(std::move(data), channels, sampleRate);
+}
+
+
+
+
+std::vector<float> resampleBuffer(std::vector<float>& dataVec, double inputSampleRate, double outputSampleRate, int channels, int converterType) {
+    if (channels < 1)
+        throw std::invalid_argument("channels must be >= 1");
+
+    size_t inFrames = dataVec.size() / channels;
+    if (inFrames * channels != dataVec.size())
+        throw std::invalid_argument("Input size not divisible by channels");
+
+    double ratio = outputSampleRate / inputSampleRate;
+    size_t maxOutFrames = static_cast<size_t>(inFrames * ratio) + 1;
+
+    std::vector<float> out(maxOutFrames * channels);
+
+    SRC_DATA data;
+    data.data_in        = dataVec.data();
+    data.input_frames   = static_cast<long>(inFrames);
+    data.data_out       = out.data();
+    data.output_frames  = static_cast<long>(maxOutFrames);
+    data.src_ratio      = ratio;
+    data.end_of_input   = 1;
+    data.input_frames_used = 0;
+    data.output_frames_gen = 0;
+
+    int err = src_simple(&data, converterType, channels);
+    if (err != 0) {
+        throw std::runtime_error(std::string("libsamplerate error: ")
+                                 + src_strerror(err));
+    }
+
+    out.resize(data.output_frames_gen * channels);
+    return out;
 }
