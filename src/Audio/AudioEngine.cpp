@@ -1,5 +1,6 @@
 #include "Audio/AudioEngine.h"
 #include <spdlog/spdlog.h>
+#include <algorithm>
 
 AudioEngine::AudioEngine()
     : m_stream(nullptr)
