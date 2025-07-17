@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Audio/AudioBuffer.h"
+#include "Utility/IdPool.h"
 
 
 class AudioManager {
@@ -27,4 +28,5 @@ public:
 
 private:
     std::vector<std::pair<int, AudioBuffer>> m_audioBuffers;
+    IdPool m_idPool;
 };

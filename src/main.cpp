@@ -19,15 +19,13 @@ int main()
     // AudioBuffer &audioBuffer = audioManager.get(0)->second;
     // AudioBuffer &audioBufferTwo = audioManager.get(1)->second;
 
-    Voice voice;
+    Clip voice;
     voice.channels = audioBuffer.channels;
     voice.sampleRate = audioBuffer.sampleRate;
     voice.data = audioBuffer.data.data();
     voice.size = audioBuffer.data.size();
 
-    Voice Vtwo = Voice::fromBuffer(audioBufferTwo, 30000, 40000);
-
-    spdlog::info("{} | {} | {} | {}", voice.frameCount(), voice.size, voice.channels, voice.sampleRate);
+    Clip Vtwo = Clip::fromBuffer(audioBufferTwo, 30000, 40000);
 
     audioEngine.addVoice(std::move(voice));
     audioEngine.addVoice(std::move(Vtwo));

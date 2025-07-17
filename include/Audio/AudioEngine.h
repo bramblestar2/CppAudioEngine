@@ -5,14 +5,14 @@
 #include <portaudio.h>
 
 #include "Audio/AudioManager.h"
-#include "Audio/Voice.h"
+#include "Audio/Mixer.h"
 
 class AudioEngine {
 public:
     AudioEngine();
     ~AudioEngine();
 
-    void addVoice(Voice&& voice);
+    int addVoice(Clip voice);
     void removeVoice(int id);
 
     bool start();
@@ -31,13 +31,10 @@ private:
                               unsigned long frames, 
                               const PaStreamCallbackTimeInfo* timeInfo, 
                               PaStreamCallbackFlags flags);
-
-    PaStream *m_stream;
-
-    std::mutex m_mutex;
-
-    std::vector<Voice> m_voices;
-
+          
     float m_sampleRate;
     int m_channels;
+
+    Mixer m_mixer;
+    PaStream *m_stream;
 };

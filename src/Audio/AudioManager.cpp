@@ -15,6 +15,14 @@ AudioManager::AudioManager() {
 }
 
 int AudioManager::load(std::string file, int id) {
+    if (id == -1) {
+        id = m_idPool.acquire();
+    } else if (m_idPool.exists(id)) {
+        return -1;
+    } else {
+        m_idPool.reserve(id);
+    }
+
     if (!std::filesystem::exists(file)) {
         spdlog::error("File does not exist: {}", file);
         return -1;
@@ -41,10 +49,26 @@ int AudioManager::load(std::string file, int id) {
 }
 
 int AudioManager::load(std::vector<float>&& data, int channels, double sampleRate, int id) {
+    if (id == -1) {
+        id = m_idPool.acquire();
+    } else if (m_idPool.exists(id)) {
+        return -1;
+    } else {
+        m_idPool.reserve(id);
+    }
+
     return load(std::move(AudioBuffer(std::move(data), channels, sampleRate)), id);
 }
 
 int AudioManager::load(AudioBuffer&& audioBuffer, int id) {
+    if (id == -1) {
+        id = m_idPool.acquire();
+    } else if (m_idPool.exists(id)) {
+        return -1;
+    } else {
+        m_idPool.reserve(id);
+    }
+
     m_audioBuffers.push_back(std::make_pair(id, audioBuffer));
     return id;
 }
@@ -54,6 +78,7 @@ void AudioManager::remove_id(int id) {
         return pair.first == id;
     });
     if (it != m_audioBuffers.end()) {
+        m_idPool.release(id);
         m_audioBuffers.erase(it);
     }
 }
@@ -62,11 +87,13 @@ void AudioManager::remove(int index) {
     if (index < 0 || index >= m_audioBuffers.size()) {
         return;
     }
+    m_idPool.release(m_audioBuffers[index].first);
     m_audioBuffers.erase(m_audioBuffers.begin() + index);
 }
 
 void AudioManager::clear() {
     m_audioBuffers.clear();
+    m_idPool.clear();
 }
 
 AudioBuffer* AudioManager::get_id(int id) {
