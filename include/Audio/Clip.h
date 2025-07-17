@@ -1,5 +1,8 @@
 #pragma once
 #include <cstdint>
+#include <memory>
+#include <vector>
+#include "ClipEffects.h"
 
 struct Clip {
     const float* data;
@@ -8,6 +11,8 @@ struct Clip {
 
     int channels = 0;
     double sampleRate = 0.0;
+
+    std::vector<std::shared_ptr<ClipEffect>> effects;
 
     uint64_t frameCount() const {
         return size / channels;
