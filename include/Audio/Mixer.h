@@ -10,12 +10,12 @@ public:
     Mixer(double sampleRate, int channels);
     ~Mixer() = default;
     
-    int addVoice(Clip voice);
-    void removeVoice(int id);
+    int addClip(Clip clip);
+    void removeClip(int id);
 
     void process(float* out, unsigned long frames);
 private:
-    std::vector<std::pair<int, Clip>> m_voices;
+    std::vector<std::pair<int, Clip>> m_clips;
     std::mutex m_mutex;
 
     double m_sampleRate;

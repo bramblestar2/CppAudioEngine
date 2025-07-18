@@ -16,12 +16,12 @@ AudioEngine::~AudioEngine() {
 }
 
 
-int AudioEngine::addVoice(Clip voice) {
-    return m_mixer.addVoice(voice);
+int AudioEngine::addClip(Clip clip) {
+    return m_mixer.addClip(clip);
 }
 
-void AudioEngine::removeVoice(int id) {
-    m_mixer.removeVoice(id);
+void AudioEngine::removeClip(int id) {
+    m_mixer.removeClip(id);
 }
 
 

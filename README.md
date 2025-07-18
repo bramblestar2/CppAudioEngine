@@ -8,3 +8,4 @@ vcpkg
 - unofficial-libmagic
 - sqlite3
 - libsamplerate
+- soundtouch

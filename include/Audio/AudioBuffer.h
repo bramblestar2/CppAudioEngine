@@ -17,11 +17,11 @@ struct AudioBuffer {
         return data.size() / std::max(1, channels);
     }
 
-    float estimatedBPM();
-    void calculateBPM();
+    // double estimatedBPM();
+    // void calculateBPM();
 
     static AudioBuffer load(std::string file);
     static AudioBuffer load(std::string file, uint64_t start, uint64_t end = 0, double sampleRate = -1);
 private:
-    float beatsPerMinute;
+    // double beatsPerMinute;
 };

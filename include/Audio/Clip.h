@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include "ClipEffects.h"
+#include "Audio/Effects/ClipEffects.h"
 
 struct Clip {
     const float* data;

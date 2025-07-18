@@ -10,60 +10,62 @@ AudioBuffer::AudioBuffer(std::vector<float>&& data, int channels, double sampleR
     : data(std::move(data))
     , channels(channels)
     , sampleRate(sampleRate)
-    , beatsPerMinute(0)
+    // , beatsPerMinute(120)
 {
 }
 
-float AudioBuffer::estimatedBPM() {
-    return beatsPerMinute;
-}
+// double AudioBuffer::estimatedBPM() {
+//     return beatsPerMinute;
+// }
 
-void AudioBuffer::calculateBPM() {
-    if (beatsPerMinute == 0) {
-        return;
-    }
+// void AudioBuffer::calculateBPM() {
+//     const uint_t win_size = 1024;
+//     const uint_t hop_size = 512;
 
-    const uint_t win_size = 1024;
-    const uint_t hop_size = 512;
+//     aubio_tempo_t* tempo = new_aubio_tempo("default", win_size, hop_size, (uint_t)sampleRate);
+//     if (!tempo) {
+//         return;
+//     }
 
-    aubio_tempo_t* tempo = new_aubio_tempo("default", win_size, hop_size, (uint_t)sampleRate);
-    if (!tempo) {
-        return;
-    }
+//     aubio_tempo_set_silence(tempo, -40.0);
+//     aubio_tempo_set_threshold(tempo, 0.3);
 
-    fvec_t* in = new_fvec(hop_size);
-    fvec_t* out = new_fvec(2);
+//     fvec_t* in = new_fvec(hop_size);
+//     fvec_t* out = new_fvec(1);
 
-    std::vector<float> bpmEstimates;
+//     std::vector<float> bpmEstimates;
 
-    size_t totalFrames = data.size() / channels;
-    size_t readPos = 0;
+//     size_t totalFrames = data.size() / channels;
+//     size_t readPos = 0;
 
-    while (readPos + hop_size <= totalFrames) {
-        for (size_t i = 0; i < hop_size; ++i) {
-            in->data[i] = data[(readPos + i) * channels];
-        }
+//     while (readPos + hop_size <= totalFrames) {
+//         for (size_t i = 0; i < hop_size; ++i) {
+//             in->data[i] = data[(readPos + i) * channels];
+//         }
 
-        aubio_tempo_do(tempo, in, out);
+//         aubio_tempo_do(tempo, in, out);
 
-        if (out->data[1] > 0) {
-            bpmEstimates.push_back(out->data[1]);
-        }
+//         if (out->data[0] > 0) {
+//             float bpm = aubio_tempo_get_bpm(tempo);
+//             bpmEstimates.push_back(bpm);
+//         }
 
-        readPos += hop_size;
-    }
+//         readPos += hop_size;
+//     }
 
-    del_aubio_tempo(tempo);
-    del_fvec(in);
-    del_fvec(out);
+//     del_aubio_tempo(tempo);
+//     del_fvec(in);
+//     del_fvec(out);
 
-    if (!bpmEstimates.empty()) {
-        float sum = std::accumulate(bpmEstimates.begin(), bpmEstimates.end(), 0.0f);
-        beatsPerMinute = sum / bpmEstimates.size();
-    } else {
-        beatsPerMinute = 0;
-    }
-}
+    
+//     if (!bpmEstimates.empty()) {
+//         float sum = std::accumulate(bpmEstimates.begin(), bpmEstimates.end(), 0.0f);
+
+//         beatsPerMinute = std::floor(sum / bpmEstimates.size());
+//     } else {
+//         beatsPerMinute = 120;
+//     }
+// }
 
 
 AudioBuffer AudioBuffer::load(std::string file) {
@@ -74,7 +76,9 @@ AudioBuffer AudioBuffer::load(std::string file) {
     std::vector<float> data(sndfile.frames() * channels);
     sndfile.readf(data.data(), sndfile.frames());
 
-    return AudioBuffer(std::move(data), channels, sampleRate);
+    auto buffer = AudioBuffer(std::move(data), channels, sampleRate);
+    // buffer.calculateBPM();
+    return std::move(buffer);
 }
 
 AudioBuffer AudioBuffer::load(std::string file, uint64_t start /* ms */, uint64_t end /* ms */, double sampleRate) {
@@ -98,7 +102,11 @@ AudioBuffer AudioBuffer::load(std::string file, uint64_t start /* ms */, uint64_
             data = resampleBuffer(data, sndfile.samplerate(), sampleRate, channels);
         }
 
-        return AudioBuffer(std::move(data), channels, sampleRate);
+        spdlog::info("TEST");
+
+        auto buffer = AudioBuffer(std::move(data), channels, sampleRate);
+        // buffer.calculateBPM();
+        return std::move(buffer);
     }
 
 
@@ -117,8 +125,10 @@ AudioBuffer AudioBuffer::load(std::string file, uint64_t start /* ms */, uint64_
     if (resample) {
         data = resampleBuffer(data, sndfile.samplerate(), sampleRate, channels);
     }
-    
-    return AudioBuffer(std::move(data), channels, sampleRate);
+
+    auto buffer = AudioBuffer(std::move(data), channels, sampleRate);
+    // buffer.calculateBPM();
+    return std::move(buffer);
 }
 
 

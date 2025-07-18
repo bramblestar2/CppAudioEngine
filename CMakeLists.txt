@@ -6,7 +6,7 @@ project(
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(portaudio CONFIG REQUIRED)
@@ -16,6 +16,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(unofficial-libmagic REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(SampleRate CONFIG REQUIRED)
+find_package(SoundTouch CONFIG REQUIRED)
 
 add_library(CppAudioEngineCore
     STATIC
@@ -26,7 +27,7 @@ add_library(CppAudioEngineCore
         include/Audio/AudioPlayer.h src/Audio/AudioPlayer.cpp
         include/Audio/Mixer.h src/Audio/Mixer.cpp
         include/Audio/Clip.h src/Audio/Clip.cpp
-        include/Audio/ClipEffects.h src/Audio/ClipEffects.cpp
+        include/Audio/Effects/ClipEffects.h src/Audio/Effects/ClipEffects.cpp
 
         include/Utility/IdPool.h src/Utility/IdPool.cpp
 )
@@ -39,6 +40,7 @@ target_link_libraries(CppAudioEngineCore
         unofficial::libmagic::libmagic
         unofficial::sqlite3::sqlite3
         SampleRate::samplerate
+        SoundTouch::SoundTouch
         $<$<AND:$<BOOL:UNIX>,$<NOT:$<BOOL:APPLE>>>:portaudio_static>
         $<$<BOOL:WIN32>:portaudio>
 )

@@ -12,10 +12,11 @@ Clip Clip::fromBuffer(AudioBuffer& buffer, uint64_t start /* ms */, uint64_t end
 
     uint64_t frames = endFrame - startFrame;
 
-    Clip voice;
-    voice.channels = buffer.channels;
-    voice.sampleRate = buffer.sampleRate;
-    voice.data = buffer.data.data() + startFrame * voice.channels;
-    voice.size = frames * voice.channels;
-    return voice;
+    Clip clip;
+    clip.channels = buffer.channels;
+    clip.sampleRate = buffer.sampleRate;
+    clip.data = buffer.data.data() + startFrame * clip.channels;
+    clip.size = frames * clip.channels;
+    // clip.bpm = buffer.estimatedBPM();
+    return clip;
 }

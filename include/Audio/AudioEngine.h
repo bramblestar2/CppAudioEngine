@@ -12,8 +12,8 @@ public:
     AudioEngine();
     ~AudioEngine();
 
-    int addVoice(Clip voice);
-    void removeVoice(int id);
+    int addClip(Clip clip);
+    void removeClip(int id);
 
     bool start();
     bool stop();
