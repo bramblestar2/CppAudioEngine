@@ -16,7 +16,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(unofficial-libmagic REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(SampleRate CONFIG REQUIRED)
-find_package(SoundTouch CONFIG REQUIRED)
+# find_package(SoundTouch CONFIG REQUIRED)
 
 add_library(CppAudioEngineCore
     STATIC
@@ -40,7 +40,7 @@ target_link_libraries(CppAudioEngineCore
         unofficial::libmagic::libmagic
         unofficial::sqlite3::sqlite3
         SampleRate::samplerate
-        SoundTouch::SoundTouch
+        # SoundTouch::SoundTouch
         $<$<AND:$<BOOL:UNIX>,$<NOT:$<BOOL:APPLE>>>:portaudio_static>
         $<$<BOOL:WIN32>:portaudio>
 )

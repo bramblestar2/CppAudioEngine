@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <soundtouch/SoundTouch.h>
 
 class ClipEffect {
 public:
